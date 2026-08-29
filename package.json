@@ -1,8 +1,7 @@
 {
   "name": "github-developer-analyzer",
   "version": "1.0.0",
-  "description": "Evidence-based GitHub Developer Analyzer for analyzing developer skills, projects, source code, activity, complexity and claims.",
-  "type": "module",
+  "description": "Evidence-based GitHub developer analysis system",
   "main": "server/server.js",
   "scripts": {
     "start": "node server/server.js",
@@ -10,17 +9,15 @@
   },
   "keywords": [
     "github",
-    "github-analyzer",
     "developer-analyzer",
+    "github-api",
     "code-analysis",
-    "repository-analysis",
-    "developer-rating",
-    "github-api"
+    "developer-analysis"
   ],
-  "author": "Haproven Technologies",
+  "author": "CoderSusheel",
   "license": "MIT",
   "dependencies": {
-    "dotenv": "^16.6.1",
+    "dotenv": "^16.4.7",
     "express": "^5.1.0"
   }
 }
