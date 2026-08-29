@@ -25,7 +25,17 @@ cmd
 CMD में:
 
 ```bash
-cd C:\Users\MSI-1\github-developer-analyzer
+cd Windows + R
+↓
+cmd
+↓
+cd  D:\GitHub\project-t\github-developer-analyzer
+↓
+npm install
+↓
+npm run dev
+↓
+Browser → http://localhost:3000
 ```
 
 फिर **Enter** दबाएँ।
