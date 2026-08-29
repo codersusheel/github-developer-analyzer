@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="description"
+        content="GitHub Developer Analyzer — evidence-based analysis of GitHub developers, repositories, code, skills, activity and projects.">
+
+    <title>GitHub Developer Analyzer</title>
+
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+
+    <!-- =========================================================
+     APP
+========================================================= -->
+
+    <div class="app">
+
+        <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+        <header class="topbar">
+
+            <div class="brand">
+                <div class="brand-icon">GH</div>
+
+                <div>
+                    <h1>GitHub Developer Analyzer</h1>
+                    <span>Evidence-based developer analysis</span>
+                </div>
+            </div>
+
+
+            <div class="header-status">
+
+                <span class="status-dot"></span>
+
+                <span id="api-status">
+                    Ready
+                </span>
+
+            </div>
+
+        </header>
+
+
+        <!-- =====================================================
+         SEARCH BAR
+    ====================================================== -->
+
+        <section class="search-section">
+
+            <form id="github-form" class="github-search">
+
+                <div class="input-wrapper">
+
+                    <span class="input-icon">⌕</span>
+
+                    <input type="url" id="github-url" name="github-url" placeholder="Enter GitHub profile URL..."
+                        autocomplete="off" required>
+
+                    <button type="button" id="clear-search" class="clear-btn" aria-label="Clear">
+                        ×
+                    </button>
+
+                </div>
+
+                <button type="submit" id="analyze-btn" class="analyze-btn">
+                    Analyze Developer
+                </button>
+
+            </form>
+
+
+            <div class="search-info">
+
+                <span>
+                    Example:
+                    <strong>https://github.com/username</strong>
+                </span>
+
+                <span id="analysis-status">
+                    Waiting for profile
+                </span>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+         MAIN 2 PANEL
+    ====================================================== -->
+
+        <main class="main-layout">
+
+
+            <!-- =================================================
+             LEFT PANEL — DEVELOPER ANALYSIS
+        ================================================== -->
+
+            <section class="developer-panel">
+
+                <div class="panel-header">
+
+                    <div>
+                        <h2>Developer Analysis</h2>
+                        <p>
+                            Profile, skills, activity and evidence
+                        </p>
+                    </div>
+
+                    <button id="refresh-analysis" class="icon-btn" title="Refresh analysis">
+                        ↻
+                    </button>
+
+                </div>
+
+
+                <!-- Developer Profile -->
+
+                <div id="developer-profile" class="developer-profile empty-state">
+
+                    <div class="empty-icon">
+                        GH
+                    </div>
+
+                    <h3>No Developer Selected</h3>
+
+                    <p>
+                        Enter a GitHub profile URL to start analysis.
+                    </p>
+
+                </div>
+
+
+                <!-- Chat / Analysis -->
+
+                <div id="analysis-chat" class="analysis-chat">
+
+                    <!-- System -->
+
+                    <div class="chat-message system-message">
+
+                        <div class="message-avatar">
+                            AI
+                        </div>
+
+                        <div class="message-content">
+
+                            <span class="message-label">
+                                Analyzer
+                            </span>
+
+                            <p>
+                                I will analyze the developer using
+                                publicly available GitHub evidence.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Profile -->
+
+                    <div id="chat-profile" class="chat-message" hidden>
+
+                        <div class="message-avatar">
+                            👤
+                        </div>
+
+                        <div class="message-content">
+
+                            <span class="message-label">
+                                Profile
+                            </span>
+
+                            <div id="profile-analysis" class="analysis-card"></div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Skills -->
+
+                    <div id="chat-skills" class="chat-message" hidden>
+
+                        <div class="message-avatar">
+                            🧠
+                        </div>
+
+                        <div class="message-content">
+
+                            <span class="message-label">
+                                Technical Skills
+                            </span>
+
+                            <div id="skills-analysis" class="analysis-card"></div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Activity -->
+
+                    <div id="chat-activity" class="chat-message" hidden>
+
+                        <div class="message-avatar">
+                            📈
+                        </div>
+
+                        <div class="message-content">
+
+                            <span class="message-label">
+                                Development Activity
+                            </span>
+
+                            <div id="activity-analysis" class="analysis-card"></div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Claim Evidence -->
+
+                    <div id="chat-evidence" class="chat-message" hidden>
+
+                        <div class="message-avatar">
+                            ⚖️
+                        </div>
+
+                        <div class="message-content">
+
+                            <span class="message-label">
+                                Claim vs Evidence
+                            </span>
+
+                            <div id="evidence-analysis" class="analysis-card"></div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Rating -->
+
+                    <div id="chat-rating" class="chat-message" hidden>
+
+                        <div class="message-avatar">
+                            🏆
+                        </div>
+
+                        <div class="message-content">
+
+                            <span class="message-label">
+                                Final Assessment
+                            </span>
+
+                            <div id="rating-analysis" class="analysis-card"></div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- =================================================
+             RIGHT PANEL — REPOSITORIES
+        ================================================== -->
+
+            <section class="repository-panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h2>Repositories</h2>
+
+                        <p>
+                            All accessible projects
+                        </p>
+
+                    </div>
+
+                    <div id="repo-count" class="repo-count">
+                        0
+                    </div>
+
+                </div>
+
+
+                <!-- Repository Search -->
+
+                <div class="repository-toolbar">
+
+                    <div class="repo-search">
+
+                        <span>⌕</span>
+
+                        <input type="search" id="repo-search" placeholder="Search repositories..." autocomplete="off">
+
+                    </div>
+
+
+                    <select id="repo-filter" class="repo-filter">
+
+                        <option value="all">
+                            All
+                        </option>
+
+                        <option value="strong">
+                            Strong
+                        </option>
+
+                        <option value="medium">
+                            Medium
+                        </option>
+
+                        <option value="basic">
+                            Basic
+                        </option>
+
+                        <option value="active">
+                            Active
+                        </option>
+
+                        <option value="old">
+                            Old
+                        </option>
+
+                        <option value="fork">
+                            Forks
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- Repository List -->
+
+                <div id="repository-list" class="repository-list">
+
+                    <div class="repo-empty">
+
+                        <div class="empty-icon">
+                            📂
+                        </div>
+
+                        <h3>
+                            No repositories
+                        </h3>
+
+                        <p>
+                            Analyze a GitHub developer to see
+                            their repositories here.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Repository Detail -->
+
+                <aside id="repository-detail" class="repository-detail" hidden>
+
+                    <div class="detail-header">
+
+                        <button id="close-repository" class="icon-btn">
+                            ←
+                        </button>
+
+                        <div>
+
+                            <h3 id="detail-name">
+                                Repository
+                            </h3>
+
+                            <span id="detail-status">
+                                Analysis
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div id="detail-content" class="detail-content">
+
+                        <!-- Repository information
+                         will be rendered by repository.js -->
+
+                    </div>
+
+                </aside>
+
+            </section>
+
+        </main>
+
+
+        <!-- =====================================================
+         LOADING OVERLAY
+    ====================================================== -->
+
+        <div id="loading-overlay" class="loading-overlay" hidden>
+
+            <div class="loading-box">
+
+                <div class="loader"></div>
+
+                <h3>
+                    Analyzing GitHub Developer
+                </h3>
+
+                <p id="loading-text">
+                    Fetching profile...
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+         ERROR MODAL
+    ====================================================== -->
+
+        <div id="error-modal" class="modal" hidden>
+
+            <div class="modal-box">
+
+                <button id="close-error" class="modal-close" aria-label="Close">
+                    ×
+                </button>
+
+                <div class="error-icon">
+                    !
+                </div>
+
+                <h3>
+                    GitHub Analysis Failed
+                </h3>
+
+                <p id="error-message">
+                    Unable to analyze this GitHub profile.
+                </p>
+
+                <button id="retry-analysis" class="analyze-btn">
+                    Try Again
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+         FOOTER STATUS
+    ====================================================== -->
+
+        <footer class="app-footer">
+
+            <span>
+                GitHub Developer Analyzer
+            </span>
+
+            <span>
+                Evidence-based analysis
+            </span>
+
+            <span id="footer-api-status">
+                API: Ready
+            </span>
+
+        </footer>
+
+    </div>
+
+
+    <!-- =========================================================
+     JAVASCRIPT
+========================================================= -->
+
+    <script src="assets/js/github.js"></script>
+    <script src="assets/js/analysis.js"></script>
+    <script src="assets/js/repository.js"></script>
+    <script src="assets/js/ui.js"></script>
+    <script src="assets/js/app.js"></script>
+
+</body>
+
+</html>

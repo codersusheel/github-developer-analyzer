@@ -1,0 +1,1189 @@
+/* =========================================================
+   GitHub Developer Analyzer
+   Main Stylesheet
+========================================================= */
+
+:root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --panel-2: #1c2128;
+    --border: #30363d;
+
+    --text: #f0f6fc;
+    --muted: #8b949e;
+
+    --primary: #238636;
+    --primary-hover: #2ea043;
+
+    --blue: #58a6ff;
+    --green: #3fb950;
+    --yellow: #d29922;
+    --red: #f85149;
+
+    --radius: 10px;
+    --header-height: 64px;
+    --footer-height: 30px;
+}
+
+
+/* =========================================================
+   RESET
+========================================================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Arial,
+        sans-serif;
+
+    overflow: hidden;
+}
+
+button,
+input,
+select {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+
+/* =========================================================
+   APP
+========================================================= */
+
+.app {
+    width: 100%;
+    height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+
+    overflow: hidden;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.topbar {
+    height: var(--header-height);
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 20px;
+
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.brand-icon {
+    width: 38px;
+    height: 38px;
+
+    display: grid;
+    place-items: center;
+
+    background: #000;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.brand h1 {
+    font-size: 16px;
+    line-height: 1.2;
+}
+
+.brand span {
+    display: block;
+    margin-top: 3px;
+
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.header-status {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+
+    background: var(--green);
+    border-radius: 50%;
+}
+
+
+/* =========================================================
+   SEARCH SECTION
+========================================================= */
+
+.search-section {
+    flex-shrink: 0;
+
+    padding: 12px 20px;
+
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+}
+
+.github-search {
+    width: 100%;
+
+    display: flex;
+    gap: 10px;
+}
+
+.input-wrapper {
+    position: relative;
+    flex: 1;
+}
+
+.input-icon {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    color: var(--muted);
+    font-size: 20px;
+}
+
+#github-url {
+    width: 100%;
+    height: 42px;
+
+    padding: 0 40px;
+
+    color: var(--text);
+    background: var(--panel);
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+
+    outline: none;
+
+    transition: border-color 0.2s;
+}
+
+#github-url:focus {
+    border-color: var(--blue);
+}
+
+#github-url::placeholder {
+    color: var(--muted);
+}
+
+.clear-btn {
+    position: absolute;
+
+    right: 7px;
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    width: 28px;
+    height: 28px;
+
+    border: 0;
+    border-radius: 6px;
+
+    color: var(--muted);
+    background: transparent;
+
+    font-size: 20px;
+}
+
+.clear-btn:hover {
+    color: var(--text);
+    background: var(--panel-2);
+}
+
+.analyze-btn {
+    height: 42px;
+
+    padding: 0 18px;
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius);
+
+    color: #fff;
+    background: var(--primary);
+
+    font-weight: 600;
+
+    white-space: nowrap;
+
+    transition:
+        background 0.2s,
+        transform 0.1s;
+}
+
+.analyze-btn:hover {
+    background: var(--primary-hover);
+}
+
+.analyze-btn:active {
+    transform: translateY(1px);
+}
+
+.search-info {
+    margin-top: 7px;
+
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.search-info strong {
+    color: var(--text);
+    font-weight: 500;
+}
+
+
+/* =========================================================
+   MAIN LAYOUT
+========================================================= */
+
+.main-layout {
+    flex: 1;
+    min-height: 0;
+
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+
+    overflow: hidden;
+}
+
+
+/* =========================================================
+   PANELS
+========================================================= */
+
+.developer-panel,
+.repository-panel {
+    min-width: 0;
+    min-height: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    background: var(--panel);
+}
+
+.developer-panel {
+    border-right: 1px solid var(--border);
+}
+
+
+/* =========================================================
+   PANEL HEADER
+========================================================= */
+
+.panel-header {
+    min-height: 62px;
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 10px 16px;
+
+    border-bottom: 1px solid var(--border);
+}
+
+.panel-header h2 {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.panel-header p {
+    margin-top: 3px;
+
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.icon-btn {
+    width: 34px;
+    height: 34px;
+
+    display: grid;
+    place-items: center;
+
+    border: 1px solid var(--border);
+    border-radius: 7px;
+
+    color: var(--muted);
+    background: var(--panel-2);
+
+    font-size: 17px;
+}
+
+.icon-btn:hover {
+    color: var(--text);
+    border-color: #484f58;
+}
+
+
+/* =========================================================
+   DEVELOPER PROFILE
+========================================================= */
+
+.developer-profile {
+    flex-shrink: 0;
+
+    padding: 14px 16px;
+
+    border-bottom: 1px solid var(--border);
+}
+
+.developer-profile.empty-state {
+    min-height: 150px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+}
+
+.empty-icon {
+    width: 42px;
+    height: 42px;
+
+    display: grid;
+    place-items: center;
+
+    margin-bottom: 9px;
+
+    border: 1px solid var(--border);
+    border-radius: 50%;
+
+    color: var(--muted);
+    background: var(--panel-2);
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.empty-state h3 {
+    font-size: 13px;
+}
+
+.empty-state p {
+    max-width: 300px;
+
+    margin-top: 5px;
+
+    color: var(--muted);
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   ANALYSIS CHAT
+========================================================= */
+
+.analysis-chat {
+    flex: 1;
+    min-height: 0;
+
+    padding: 16px;
+
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.chat-message {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+
+    margin-bottom: 15px;
+}
+
+.message-avatar {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+
+    display: grid;
+    place-items: center;
+
+    border: 1px solid var(--border);
+    border-radius: 8px;
+
+    background: var(--panel-2);
+
+    color: var(--muted);
+
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.message-content {
+    min-width: 0;
+    flex: 1;
+}
+
+.message-label {
+    display: block;
+
+    margin-bottom: 5px;
+
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.message-content>p {
+    color: #c9d1d9;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   ANALYSIS CARD
+========================================================= */
+
+.analysis-card {
+    padding: 11px;
+
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+
+    color: #c9d1d9;
+
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.analysis-card+.analysis-card {
+    margin-top: 6px;
+}
+
+.analysis-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+
+    padding: 6px 0;
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.analysis-row:last-child {
+    border-bottom: 0;
+}
+
+.analysis-label {
+    color: var(--muted);
+}
+
+.analysis-value {
+    color: var(--text);
+    text-align: right;
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   REPOSITORY TOOLBAR
+========================================================= */
+
+.repository-toolbar {
+    flex-shrink: 0;
+
+    display: flex;
+    gap: 8px;
+
+    padding: 10px 12px;
+
+    border-bottom: 1px solid var(--border);
+}
+
+.repo-search {
+    position: relative;
+    flex: 1;
+}
+
+.repo-search>span {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    color: var(--muted);
+}
+
+#repo-search {
+    width: 100%;
+    height: 36px;
+
+    padding: 0 12px 0 32px;
+
+    color: var(--text);
+    background: var(--bg);
+
+    border: 1px solid var(--border);
+    border-radius: 7px;
+
+    outline: none;
+}
+
+#repo-search:focus {
+    border-color: var(--blue);
+}
+
+.repo-filter {
+    width: 115px;
+    height: 36px;
+
+    padding: 0 8px;
+
+    color: var(--text);
+    background: var(--bg);
+
+    border: 1px solid var(--border);
+    border-radius: 7px;
+
+    outline: none;
+}
+
+.repo-count {
+    min-width: 28px;
+    height: 24px;
+
+    display: grid;
+    place-items: center;
+
+    padding: 0 8px;
+
+    color: var(--muted);
+    background: var(--panel-2);
+
+    border: 1px solid var(--border);
+    border-radius: 20px;
+
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   REPOSITORY LIST
+========================================================= */
+
+.repository-list {
+    flex: 1;
+    min-height: 0;
+
+    padding: 10px;
+
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.repo-empty {
+    min-height: 220px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+}
+
+.repo-empty .empty-icon {
+    font-size: 18px;
+}
+
+.repo-empty h3 {
+    font-size: 13px;
+}
+
+.repo-empty p {
+    max-width: 280px;
+
+    margin-top: 5px;
+
+    color: var(--muted);
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   REPOSITORY ITEM
+========================================================= */
+
+.repository-item {
+    padding: 12px;
+
+    margin-bottom: 8px;
+
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+
+    cursor: pointer;
+
+    transition:
+        border-color 0.15s,
+        transform 0.15s,
+        background 0.15s;
+}
+
+.repository-item:hover {
+    background: var(--panel-2);
+    border-color: #484f58;
+    transform: translateY(-1px);
+}
+
+.repository-name {
+    color: var(--blue);
+
+    font-size: 13px;
+    font-weight: 700;
+
+    word-break: break-word;
+}
+
+.repository-description {
+    margin-top: 5px;
+
+    color: var(--muted);
+
+    font-size: 11px;
+    line-height: 1.5;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+
+    overflow: hidden;
+}
+
+.repository-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+
+    margin-top: 9px;
+
+    color: var(--muted);
+
+    font-size: 10px;
+}
+
+.repository-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+
+    margin-top: 8px;
+}
+
+.badge {
+    padding: 3px 7px;
+
+    border: 1px solid var(--border);
+    border-radius: 20px;
+
+    color: var(--muted);
+    background: var(--panel);
+
+    font-size: 9px;
+}
+
+.badge.strong {
+    color: var(--green);
+}
+
+.badge.medium {
+    color: var(--yellow);
+}
+
+.badge.basic {
+    color: var(--muted);
+}
+
+.badge.fork {
+    color: var(--blue);
+}
+
+
+/* =========================================================
+   REPOSITORY DETAIL
+========================================================= */
+
+.repository-detail {
+    position: absolute;
+    inset: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    background: var(--panel);
+
+    z-index: 10;
+}
+
+.repository-panel {
+    position: relative;
+}
+
+.detail-header {
+    min-height: 62px;
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 10px 14px;
+
+    border-bottom: 1px solid var(--border);
+}
+
+.detail-header h3 {
+    font-size: 14px;
+
+    word-break: break-word;
+}
+
+.detail-header span {
+    display: block;
+
+    margin-top: 2px;
+
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.detail-content {
+    flex: 1;
+    min-height: 0;
+
+    padding: 14px;
+
+    overflow-y: auto;
+}
+
+
+/* =========================================================
+   DETAIL SECTIONS
+========================================================= */
+
+.detail-section {
+    margin-bottom: 16px;
+}
+
+.detail-section h4 {
+    margin-bottom: 8px;
+
+    font-size: 12px;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    gap: 7px;
+}
+
+.detail-box {
+    padding: 9px;
+
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+}
+
+.detail-box span {
+    display: block;
+
+    color: var(--muted);
+    font-size: 9px;
+}
+
+.detail-box strong {
+    display: block;
+
+    margin-top: 3px;
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+.loading-overlay {
+    position: fixed;
+    inset: 0;
+
+    z-index: 100;
+
+    display: grid;
+    place-items: center;
+
+    background: rgba(13, 17, 23, 0.82);
+
+    backdrop-filter: blur(4px);
+}
+
+.loading-box {
+    width: min(360px, calc(100% - 30px));
+
+    padding: 24px;
+
+    text-align: center;
+
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.loader {
+    width: 32px;
+    height: 32px;
+
+    margin: 0 auto 14px;
+
+    border: 3px solid var(--border);
+    border-top-color: var(--blue);
+    border-radius: 50%;
+
+    animation: spin 0.8s linear infinite;
+}
+
+.loading-box h3 {
+    font-size: 14px;
+}
+
+.loading-box p {
+    margin-top: 6px;
+
+    color: var(--muted);
+    font-size: 11px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+.modal {
+    position: fixed;
+    inset: 0;
+
+    z-index: 200;
+
+    display: grid;
+    place-items: center;
+
+    padding: 20px;
+
+    background: rgba(0, 0, 0, 0.7);
+
+    backdrop-filter: blur(4px);
+}
+
+.modal-box {
+    position: relative;
+
+    width: min(420px, 100%);
+
+    padding: 24px;
+
+    text-align: center;
+
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.modal-close {
+    position: absolute;
+
+    top: 8px;
+    right: 8px;
+
+    width: 30px;
+    height: 30px;
+
+    border: 0;
+    border-radius: 6px;
+
+    color: var(--muted);
+    background: transparent;
+
+    font-size: 20px;
+}
+
+.modal-close:hover {
+    color: var(--text);
+    background: var(--panel-2);
+}
+
+.error-icon {
+    width: 42px;
+    height: 42px;
+
+    display: grid;
+    place-items: center;
+
+    margin: 0 auto 12px;
+
+    color: var(--red);
+    background: rgba(248, 81, 73, 0.1);
+
+    border: 1px solid rgba(248, 81, 73, 0.3);
+    border-radius: 50%;
+
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.modal-box h3 {
+    font-size: 15px;
+}
+
+.modal-box p {
+    margin: 7px 0 17px;
+
+    color: var(--muted);
+
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.modal-box .analyze-btn {
+    width: 100%;
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.app-footer {
+    height: var(--footer-height);
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 14px;
+
+    color: var(--muted);
+    background: var(--panel);
+
+    border-top: 1px solid var(--border);
+
+    font-size: 9px;
+}
+
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #30363d transparent;
+}
+
+*::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: #30363d;
+    border-radius: 20px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: #484f58;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 850px) {
+
+    body {
+        overflow: auto;
+    }
+
+    .app {
+        height: auto;
+        min-height: 100vh;
+
+        overflow: visible;
+    }
+
+    .main-layout {
+        min-height: 0;
+
+        grid-template-columns: 1fr;
+
+        overflow: visible;
+    }
+
+    .developer-panel {
+        min-height: 650px;
+
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .repository-panel {
+        min-height: 650px;
+    }
+
+    .analysis-chat,
+    .repository-list {
+        overflow-y: auto;
+    }
+}
+
+
+@media (max-width: 600px) {
+
+    .topbar {
+        padding: 0 12px;
+    }
+
+    .brand h1 {
+        font-size: 14px;
+    }
+
+    .brand span {
+        display: none;
+    }
+
+    .header-status {
+        display: none;
+    }
+
+    .search-section {
+        padding: 10px 12px;
+    }
+
+    .github-search {
+        flex-direction: column;
+    }
+
+    .analyze-btn {
+        width: 100%;
+    }
+
+    .search-info {
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .panel-header {
+        padding: 10px 12px;
+    }
+
+    .repository-toolbar {
+        flex-direction: column;
+    }
+
+    .repo-filter {
+        width: 100%;
+    }
+
+    .analysis-chat {
+        padding: 12px;
+    }
+
+    .repository-list {
+        padding: 8px;
+    }
+
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .app-footer {
+        display: none;
+    }
+}
