@@ -9,6 +9,7 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 
 const app = express();
 
@@ -20,12 +21,25 @@ const GITHUB_TOKEN =
 
 
 /* =========================================================
+   FRONTEND
+========================================================= */
+
+const FRONTEND_DIR =
+    path.join(__dirname, "..");
+
+app.use(
+    express.static(FRONTEND_DIR)
+);
+
+
+/* =========================================================
    MIDDLEWARE
 ========================================================= */
 
 app.use(
     cors({
-        origin: process.env.FRONTEND_ORIGIN || "*"
+        origin:
+            process.env.FRONTEND_ORIGIN || "*"
     })
 );
 
@@ -56,7 +70,6 @@ app.use(
         );
 
         next();
-
     }
 );
 
@@ -79,7 +92,6 @@ async function githubRequest(
 
         "User-Agent":
             "GitHub-Developer-Analyzer"
-
     };
 
 
@@ -271,7 +283,7 @@ app.get(
             });
 
         } catch (
-        error
+            error
         ) {
 
             return sendError(
@@ -338,7 +350,7 @@ app.get(
             });
 
         } catch (
-        error
+            error
         ) {
 
             return sendError(
@@ -536,7 +548,7 @@ app.get(
             });
 
         } catch (
-        error
+            error
         ) {
 
             return sendError(
@@ -701,6 +713,25 @@ app.get(
                 new Date().toISOString()
 
         });
+
+    }
+);
+
+
+/* =========================================================
+   FRONTEND HOME
+========================================================= */
+
+app.get(
+    "/",
+    function (req, res) {
+
+        res.sendFile(
+            path.join(
+                FRONTEND_DIR,
+                "index.html"
+            )
+        );
 
     }
 );

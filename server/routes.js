@@ -6,157 +6,167 @@
 "use strict";
 
 const express = require("express");
-
 const router = express.Router();
-
 
 /* =========================================================
    SERVICES
 ========================================================= */
 
-const github =
-    require("./github");
-
-
-const analysis =
-    require("./analysis");
-
-
-const repository =
-    require("./repository");
-
+const github = require("./github");
+const analysis = require("./analysis");
+const repository = require("./repository");
 
 /* =========================================================
    HEALTH
 ========================================================= */
 
-router.get(
-    "/health",
-    function (req, res) {
-
-        res.json({
-
-            success: true,
-
-            service:
-                "GitHub Developer Analyzer",
-
-            timestamp:
-                new Date().toISOString()
-
-        });
-
-    }
-);
-
+router.get("/health", function (req, res) {
+    res.json({
+        success: true,
+        service: "GitHub Developer Analyzer",
+        githubAuthentication: Boolean(
+            process.env.GITHUB_TOKEN
+        ),
+        timestamp: new Date().toISOString()
+    });
+});
 
 /* =========================================================
    PROFILE
 ========================================================= */
 
-router.get(
-    "/github/profile/:username",
-    async function (req, res) {
+router.get("/github/profile/:username", async function (req, res) {
+    try {
+        const username = getUsername(req.params.username);
 
-        try {
+        validateUsername(username);
 
-            const username =
-                getUsername(
-                    req.params.username
-                );
+        const profile = await github.getProfile(username);
 
+        res.json({
+            success: true,
+            data: profile
+        });
 
-            validateUsername(
-                username
-            );
-
-
-            const profile =
-                await github.getProfile(
-                    username
-                );
-
-
-            res.json({
-
-                success: true,
-
-                data:
-                    profile
-
-            });
-
-        } catch (
-            error
-        ) {
-
-            sendError(
-                res,
-                error
-            );
-
-        }
-
+    } catch (error) {
+        sendError(res, error);
     }
-);
-
+});
 
 /* =========================================================
    REPOSITORIES
 ========================================================= */
 
-router.get(
-    "/github/repos/:username",
-    async function (req, res) {
+router.get("/github/repos/:username", async function (req, res) {
+    try {
+        const username = getUsername(req.params.username);
 
-        try {
+        validateUsername(username);
 
-            const username =
-                getUsername(
-                    req.params.username
-                );
+        const repositories =
+            await github.getAllRepositories(username);
 
+        res.json({
+            success: true,
+            count: repositories.length,
+            data: repositories
+        });
 
-            validateUsername(
-                username
-            );
-
-
-            const repositories =
-                await github.getAllRepositories(
-                    username
-                );
-
-
-            res.json({
-
-                success: true,
-
-                count:
-                    repositories.length,
-
-                data:
-                    repositories
-
-            });
-
-        } catch (
-            error
-        ) {
-
-            sendError(
-                res,
-                error
-            );
-
-        }
-
+    } catch (error) {
+        sendError(res, error);
     }
-);
-
+});
 
 /* =========================================================
    COMPLETE ANALYSIS
+   PRIMARY FRONTEND ROUTE
+
+   /api/analyze/:username
+========================================================= */
+
+router.get("/analyze/:username", async function (req, res) {
+    try {
+        const username = getUsername(req.params.username);
+
+        validateUsername(username);
+
+        console.log(
+            `[ANALYZE] Starting analysis for: ${username}`
+        );
+
+        /* -------------------------------------------------
+           Fetch GitHub profile + repositories
+        ------------------------------------------------- */
+
+        const [
+            profile,
+            repositories
+        ] = await Promise.all([
+            github.getProfile(username),
+            github.getAllRepositories(username)
+        ]);
+
+        /* -------------------------------------------------
+           Repository analysis
+        ------------------------------------------------- */
+
+        const projectAnalysis =
+            analysis.analyzeRepositories(
+                repositories
+            );
+
+        /* -------------------------------------------------
+           Developer analysis
+        ------------------------------------------------- */
+
+        const developerAnalysis =
+            analysis.analyzeDeveloper(
+                profile,
+                repositories,
+                projectAnalysis
+            );
+
+        console.log(
+            `[ANALYZE] Completed analysis for: ${username}`
+        );
+
+        res.json({
+            success: true,
+
+            profile: profile,
+
+            repositories: {
+                total: repositories.length,
+                projects: projectAnalysis
+            },
+
+            analysis: developerAnalysis,
+
+            metadata: {
+                username: username,
+                source: "GitHub API",
+                evidencePolicy:
+                    "No evidence = Not Verifiable",
+                analyzedAt:
+                    new Date().toISOString()
+            }
+        });
+
+    } catch (error) {
+        console.error(
+            `[ANALYZE] Failed: ${error.message}`
+        );
+
+        sendError(res, error);
+    }
+});
+
+/* =========================================================
+   COMPLETE ANALYSIS — COMPATIBILITY ROUTE
+
+   /api/github/analyze/:username
+
+   Kept so old frontend/API calls also continue working.
 ========================================================= */
 
 router.get(
@@ -164,52 +174,23 @@ router.get(
     async function (req, res) {
 
         try {
-
             const username =
-                getUsername(
-                    req.params.username
-                );
+                getUsername(req.params.username);
 
-
-            validateUsername(
-                username
-            );
-
-
-            /*
-             * Fetch developer profile
-             * and repositories.
-             */
+            validateUsername(username);
 
             const [
                 profile,
                 repositories
             ] = await Promise.all([
-
-                github.getProfile(
-                    username
-                ),
-
-                github.getAllRepositories(
-                    username
-                )
-
+                github.getProfile(username),
+                github.getAllRepositories(username)
             ]);
-
-
-            /*
-             * Analyze repositories.
-             */
 
             const projectAnalysis =
                 analysis.analyzeRepositories(
                     repositories
                 );
-
-
-            /*
-             * Developer-level analysis.
-             */
 
             const developerAnalysis =
                 analysis.analyzeDeveloper(
@@ -218,54 +199,33 @@ router.get(
                     projectAnalysis
                 );
 
-
             res.json({
-
                 success: true,
 
-                profile:
-
-                    profile,
+                profile: profile,
 
                 repositories: {
-
-                    total:
-                        repositories.length,
-
-                    projects:
-                        projectAnalysis
-
+                    total: repositories.length,
+                    projects: projectAnalysis
                 },
 
-                analysis:
-                    developerAnalysis,
+                analysis: developerAnalysis,
 
                 metadata: {
-
-                    source:
-                        "GitHub API",
-
+                    username: username,
+                    source: "GitHub API",
                     evidencePolicy:
-                        "No evidence = Not Verifiable"
-
+                        "No evidence = Not Verifiable",
+                    analyzedAt:
+                        new Date().toISOString()
                 }
-
             });
 
-        } catch (
-            error
-        ) {
-
-            sendError(
-                res,
-                error
-            );
-
+        } catch (error) {
+            sendError(res, error);
         }
-
     }
 );
-
 
 /* =========================================================
    SINGLE REPOSITORY
@@ -276,31 +236,18 @@ router.get(
     async function (req, res) {
 
         try {
-
             const owner =
-                clean(
-                    req.params.owner
-                );
-
+                clean(req.params.owner);
 
             const repo =
-                clean(
-                    req.params.repo
-                );
+                clean(req.params.repo);
 
-
-            if (
-                !owner ||
-                !repo
-            ) {
-
+            if (!owner || !repo) {
                 throw createError(
                     400,
                     "Repository owner and name are required."
                 );
-
             }
-
 
             const data =
                 await github.getRepository(
@@ -308,29 +255,16 @@ router.get(
                     repo
                 );
 
-
             res.json({
-
                 success: true,
-
-                data
-
+                data: data
             });
 
-        } catch (
-            error
-        ) {
-
-            sendError(
-                res,
-                error
-            );
-
+        } catch (error) {
+            sendError(res, error);
         }
-
     }
 );
-
 
 /* =========================================================
    REPOSITORY LANGUAGES
@@ -341,18 +275,11 @@ router.get(
     async function (req, res) {
 
         try {
-
             const owner =
-                clean(
-                    req.params.owner
-                );
-
+                clean(req.params.owner);
 
             const repo =
-                clean(
-                    req.params.repo
-                );
-
+                clean(req.params.repo);
 
             const data =
                 await github.getLanguages(
@@ -360,29 +287,16 @@ router.get(
                     repo
                 );
 
-
             res.json({
-
                 success: true,
-
-                data
-
+                data: data
             });
 
-        } catch (
-            error
-        ) {
-
-            sendError(
-                res,
-                error
-            );
-
+        } catch (error) {
+            sendError(res, error);
         }
-
     }
 );
-
 
 /* =========================================================
    COMMITS
@@ -393,18 +307,11 @@ router.get(
     async function (req, res) {
 
         try {
-
             const owner =
-                clean(
-                    req.params.owner
-                );
-
+                clean(req.params.owner);
 
             const repo =
-                clean(
-                    req.params.repo
-                );
-
+                clean(req.params.repo);
 
             const data =
                 await github.getCommits(
@@ -412,32 +319,17 @@ router.get(
                     repo
                 );
 
-
             res.json({
-
                 success: true,
-
-                count:
-                    data.length,
-
-                data
-
+                count: data.length,
+                data: data
             });
 
-        } catch (
-            error
-        ) {
-
-            sendError(
-                res,
-                error
-            );
-
+        } catch (error) {
+            sendError(res, error);
         }
-
     }
 );
-
 
 /* =========================================================
    ISSUES
@@ -448,18 +340,11 @@ router.get(
     async function (req, res) {
 
         try {
-
             const owner =
-                clean(
-                    req.params.owner
-                );
-
+                clean(req.params.owner);
 
             const repo =
-                clean(
-                    req.params.repo
-                );
-
+                clean(req.params.repo);
 
             const data =
                 await github.getIssues(
@@ -467,32 +352,17 @@ router.get(
                     repo
                 );
 
-
             res.json({
-
                 success: true,
-
-                count:
-                    data.length,
-
-                data
-
+                count: data.length,
+                data: data
             });
 
-        } catch (
-            error
-        ) {
-
-            sendError(
-                res,
-                error
-            );
-
+        } catch (error) {
+            sendError(res, error);
         }
-
     }
 );
-
 
 /* =========================================================
    PULL REQUESTS
@@ -503,18 +373,11 @@ router.get(
     async function (req, res) {
 
         try {
-
             const owner =
-                clean(
-                    req.params.owner
-                );
-
+                clean(req.params.owner);
 
             const repo =
-                clean(
-                    req.params.repo
-                );
-
+                clean(req.params.repo);
 
             const data =
                 await github.getPullRequests(
@@ -522,32 +385,17 @@ router.get(
                     repo
                 );
 
-
             res.json({
-
                 success: true,
-
-                count:
-                    data.length,
-
-                data
-
+                count: data.length,
+                data: data
             });
 
-        } catch (
-            error
-        ) {
-
-            sendError(
-                res,
-                error
-            );
-
+        } catch (error) {
+            sendError(res, error);
         }
-
     }
 );
-
 
 /* =========================================================
    CONTRIBUTORS
@@ -558,18 +406,11 @@ router.get(
     async function (req, res) {
 
         try {
-
             const owner =
-                clean(
-                    req.params.owner
-                );
-
+                clean(req.params.owner);
 
             const repo =
-                clean(
-                    req.params.repo
-                );
-
+                clean(req.params.repo);
 
             const data =
                 await github.getContributors(
@@ -577,32 +418,17 @@ router.get(
                     repo
                 );
 
-
             res.json({
-
                 success: true,
-
-                count:
-                    data.length,
-
-                data
-
+                count: data.length,
+                data: data
             });
 
-        } catch (
-            error
-        ) {
-
-            sendError(
-                res,
-                error
-            );
-
+        } catch (error) {
+            sendError(res, error);
         }
-
     }
 );
-
 
 /* =========================================================
    README
@@ -613,18 +439,11 @@ router.get(
     async function (req, res) {
 
         try {
-
             const owner =
-                clean(
-                    req.params.owner
-                );
-
+                clean(req.params.owner);
 
             const repo =
-                clean(
-                    req.params.repo
-                );
-
+                clean(req.params.repo);
 
             const data =
                 await github.getReadme(
@@ -632,32 +451,19 @@ router.get(
                     repo
                 );
 
-
             res.json({
-
                 success: true,
-
-                data
-
+                data: data
             });
 
-        } catch (
-            error
-        ) {
-
-            sendError(
-                res,
-                error
-            );
-
+        } catch (error) {
+            sendError(res, error);
         }
-
     }
 );
 
-
 /* =========================================================
-   CODE ANALYSIS
+   REPOSITORY CODE ANALYSIS
 ========================================================= */
 
 router.get(
@@ -665,135 +471,94 @@ router.get(
     async function (req, res) {
 
         try {
-
             const owner =
-                clean(
-                    req.params.owner
-                );
-
+                clean(req.params.owner);
 
             const repo =
-                clean(
-                    req.params.repo
+                clean(req.params.repo);
+
+            if (!owner || !repo) {
+                throw createError(
+                    400,
+                    "Repository owner and name are required."
                 );
+            }
 
-
-            const repositoryData =
-                await github.getRepository(
+            const [
+                repositoryData,
+                languages,
+                commits,
+                issues,
+                pulls,
+                contributors,
+                readme
+            ] = await Promise.all([
+                github.getRepository(
                     owner,
                     repo
-                );
+                ),
 
-
-            const languages =
-                await github.getLanguages(
+                github.getLanguages(
                     owner,
                     repo
-                );
+                ),
 
-
-            const commits =
-                await github.getCommits(
+                github.getCommits(
                     owner,
                     repo
-                );
+                ),
 
-
-            const issues =
-                await github.getIssues(
+                github.getIssues(
                     owner,
                     repo
-                );
+                ),
 
-
-            const pulls =
-                await github.getPullRequests(
+                github.getPullRequests(
                     owner,
                     repo
-                );
+                ),
 
-
-            const contributors =
-                await github.getContributors(
+                github.getContributors(
                     owner,
                     repo
-                );
+                ),
 
-
-            const readme =
-                await github.getReadme(
+                github.getReadme(
                     owner,
                     repo
-                );
-
+                )
+            ]);
 
             const result =
-                repository.analyze(
-                    {
-                        repository:
-                            repositoryData,
-
-                        languages,
-
-                        commits,
-
-                        issues,
-
-                        pulls,
-
-                        contributors,
-
-                        readme
-                    }
-                );
-
+                repository.analyze({
+                    repository: repositoryData,
+                    languages: languages,
+                    commits: commits,
+                    issues: issues,
+                    pulls: pulls,
+                    contributors: contributors,
+                    readme: readme
+                });
 
             res.json({
-
                 success: true,
-
-                data:
-                    result
-
+                data: result
             });
 
-        } catch (
-            error
-        ) {
-
-            sendError(
-                res,
-                error
-            );
-
+        } catch (error) {
+            sendError(res, error);
         }
-
     }
 );
-
 
 /* =========================================================
    USERNAME CLEANER
 ========================================================= */
 
-function getUsername(
-    value
-) {
+function getUsername(value) {
 
     let username =
-        clean(
-            value
-        );
-
-
-    /*
-     * Support:
-     *
-     * username
-     * @username
-     * github.com/username
-     * https://github.com/username
-     */
+        clean(value);
 
     username =
         username.replace(
@@ -801,13 +566,11 @@ function getUsername(
             ""
         );
 
-
     username =
         username.replace(
             /^https?:\/\/(www\.)?github\.com\//i,
             ""
         );
-
 
     username =
         username.replace(
@@ -815,26 +578,19 @@ function getUsername(
             ""
         );
 
-
     username =
         username
             .split("/")
-            .filter(Boolean)[0] ||
-        "";
-
+            .filter(Boolean)[0] || "";
 
     return username;
-
 }
-
 
 /* =========================================================
    USERNAME VALIDATION
 ========================================================= */
 
-function validateUsername(
-    username
-) {
+function validateUsername(username) {
 
     if (
         !username ||
@@ -842,36 +598,26 @@ function validateUsername(
             username
         )
     ) {
-
         throw createError(
             400,
             "Invalid GitHub username."
         );
-
     }
-
 }
-
 
 /* =========================================================
    CLEAN INPUT
 ========================================================= */
 
-function clean(
-    value
-) {
+function clean(value) {
 
-    return String(
-        value || ""
-    )
-    .trim()
-    .replace(
-       (/[<>"'`]/g),
-        ""
-    );
-
+    return String(value || "")
+        .trim()
+        .replace(
+            /[<>"'`]/g,
+            ""
+        );
 }
-
 
 /* =========================================================
    ERROR FACTORY
@@ -883,19 +629,13 @@ function createError(
 ) {
 
     const error =
-        new Error(
-            message
-        );
-
+        new Error(message);
 
     error.status =
         status;
 
-
     return error;
-
 }
-
 
 /* =========================================================
    ERROR RESPONSE
@@ -911,44 +651,43 @@ function sendError(
         error
     );
 
-
     let status =
-        Number(
-            error?.status
-        ) || 500;
-
+        Number(error?.status) || 500;
 
     if (
         status < 400 ||
         status > 599
     ) {
-
         status = 500;
-
     }
 
-
-    res.status(
-        status
-    ).json({
-
+    res.status(status).json({
         success: false,
-
         error:
             error?.message ||
             "Request failed.",
-
         evidence:
             "Not Verifiable"
-
     });
-
 }
 
+/* =========================================================
+   404 API HANDLER
+========================================================= */
+
+router.use(function (req, res) {
+
+    res.status(404).json({
+        success: false,
+        error: "API endpoint not found.",
+        path: req.originalUrl,
+        evidence: "Not Verifiable"
+    });
+
+});
 
 /* =========================================================
    EXPORT
 ========================================================= */
 
-module.exports =
-    router;
+module.exports = router;

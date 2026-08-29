@@ -1,29 +1,26 @@
-/* =========================================================
+/*
+=========================================================
    GitHub Developer Analyzer
    github.js — GitHub / Backend API Client
-========================================================= */
+=========================================================
+*/
 
 (function () {
-
     "use strict";
-
 
     /* =====================================================
        CONFIG
     ===================================================== */
 
     const CONFIG = {
-
-        API_BASE_URL: "/api",
+        API_BASE_URL: "/api/github",
 
         ENDPOINTS: {
-
-            ANALYZE: "/analyze"
-
+            ANALYZE: "/analyze",
+            HEALTH: "/health"
         },
 
         REQUEST_TIMEOUT: 60000
-
     };
 
 
@@ -32,26 +29,13 @@
     ===================================================== */
 
     class GitHubAPIError extends Error {
-
-        constructor(
-            message,
-            status = 0,
-            data = null
-        ) {
-
+        constructor(message, status = 0, data = null) {
             super(message);
 
-            this.name =
-                "GitHubAPIError";
-
-            this.status =
-                status;
-
-            this.data =
-                data;
-
+            this.name = "GitHubAPIError";
+            this.status = status;
+            this.data = data;
         }
-
     }
 
 
@@ -59,32 +43,76 @@
        USERNAME VALIDATION
     ===================================================== */
 
-    function isValidUsername(
-        username
-    ) {
-
-        if (
-            typeof username !==
-            "string"
-        ) {
-
+    function isValidUsername(username) {
+        if (typeof username !== "string") {
             return false;
-
         }
 
-
-        username =
-            username.trim();
-
+        username = username.trim();
 
         return (
             username.length > 0 &&
             username.length <= 39 &&
-            /^[a-zA-Z0-9-]+$/.test(
-                username
-            )
+            /^[a-zA-Z0-9-]+$/.test(username)
         );
+    }
 
+
+    /* =====================================================
+       EXTRACT USERNAME
+    ===================================================== */
+
+    function extractUsername(input) {
+        if (typeof input !== "string") {
+            return null;
+        }
+
+        let value = input.trim();
+
+        if (!value) {
+            return null;
+        }
+
+        /*
+         * Allow:
+         * codersusheel
+         * https://github.com/codersusheel
+         * http://github.com/codersusheel/
+         * github.com/codersusheel
+         */
+
+        try {
+            if (
+                value.startsWith("http://") ||
+                value.startsWith("https://")
+            ) {
+                const url = new URL(value);
+
+                if (
+                    url.hostname !== "github.com" &&
+                    url.hostname !== "www.github.com"
+                ) {
+                    return null;
+                }
+
+                const parts = url.pathname
+                    .split("/")
+                    .filter(Boolean);
+
+                return parts[0] || null;
+            }
+
+            value = value
+                .replace(/^github\.com\//i, "")
+                .replace(/^www\.github\.com\//i, "")
+                .split("/")[0]
+                .trim();
+
+            return value || null;
+
+        } catch {
+            return null;
+        }
     }
 
 
@@ -92,148 +120,89 @@
        FETCH WITH TIMEOUT
     ===================================================== */
 
-    async function request(
-        url,
-        options = {}
-    ) {
+    async function request(url, options = {}) {
+        const controller = new AbortController();
 
-        const controller =
-            new AbortController();
-
-
-        const timeout =
-            setTimeout(
-                function () {
-
-                    controller.abort();
-
-                },
-                CONFIG.REQUEST_TIMEOUT
-            );
-
+        const timeout = setTimeout(function () {
+            controller.abort();
+        }, CONFIG.REQUEST_TIMEOUT);
 
         try {
+            const response = await fetch(url, {
+                ...options,
 
-            const response =
-                await fetch(
-                    url,
-                    {
-                        ...options,
+                signal: controller.signal,
 
-                        signal:
-                            controller.signal,
-
-                        headers: {
-
-                            "Accept":
-                                "application/json",
-
-                            ...(options.headers || {})
-
-                        }
-                    }
-                );
-
+                headers: {
+                    "Accept": "application/json",
+                    ...(options.headers || {})
+                }
+            });
 
             const contentType =
-                response.headers.get(
-                    "content-type"
-                ) || "";
+                response.headers.get("content-type") || "";
 
-
-            let data;
-
+            let data = null;
 
             if (
                 contentType.includes(
                     "application/json"
                 )
             ) {
-
                 try {
-
-                    data =
-                        await response.json();
-
+                    data = await response.json();
                 } catch {
-
                     data = null;
-
                 }
-
             } else {
+                const text = await response.text();
 
-                const text =
-                    await response.text();
-
-                data =
-                    text
-                        ? {
-                            message: text
-                        }
-                        : null;
-
+                data = text
+                    ? {
+                        message: text
+                    }
+                    : null;
             }
 
-
             if (!response.ok) {
-
                 throw new GitHubAPIError(
-
                     getErrorMessage(
                         response.status,
                         data
                     ),
-
                     response.status,
-
                     data
-
                 );
-
             }
-
 
             return data;
 
         } catch (error) {
 
             if (
-                error.name ===
-                "AbortError"
+                error.name === "AbortError"
             ) {
-
                 throw new GitHubAPIError(
                     "GitHub analysis request timed out.",
                     408
                 );
-
             }
-
 
             if (
-                error instanceof
-                GitHubAPIError
+                error instanceof GitHubAPIError
             ) {
-
                 throw error;
-
             }
-
 
             throw new GitHubAPIError(
                 "Unable to connect to the analysis server.",
-                0
+                0,
+                error
             );
 
         } finally {
-
-            clearTimeout(
-                timeout
-            );
-
+            clearTimeout(timeout);
         }
-
     }
 
 
@@ -241,91 +210,45 @@
        ERROR MESSAGE
     ===================================================== */
 
-    function getErrorMessage(
-        status,
-        data
-    ) {
-
+    function getErrorMessage(status, data) {
         const serverMessage =
             data?.message ||
             data?.error;
 
-
         if (serverMessage) {
-
             return serverMessage;
-
         }
-
 
         switch (status) {
 
             case 400:
-
-                return (
-                    "Invalid GitHub username."
-                );
-
+                return "Invalid GitHub username.";
 
             case 401:
-
-                return (
-                    "GitHub authentication failed."
-                );
-
+                return "GitHub authentication failed.";
 
             case 403:
-
-                return (
-                    "GitHub API rate limit reached."
-                );
-
+                return "GitHub API rate limit reached.";
 
             case 404:
-
-                return (
-                    "GitHub developer not found."
-                );
-
+                return "GitHub developer or API endpoint not found.";
 
             case 408:
-
-                return (
-                    "Request timed out."
-                );
-
+                return "Request timed out.";
 
             case 429:
-
-                return (
-                    "Too many requests. Please try again later."
-                );
-
+                return "Too many requests. Please try again later.";
 
             case 500:
-
-                return (
-                    "Analysis server error."
-                );
-
+                return "Analysis server error.";
 
             case 502:
-
             case 503:
-
-                return (
-                    "GitHub service is temporarily unavailable."
-                );
-
+                return "GitHub service is temporarily unavailable.";
 
             default:
-
-                return (
-                    "GitHub analysis failed."
-                );
-
+                return "GitHub analysis failed.";
         }
-
     }
 
 
@@ -333,44 +256,32 @@
        ANALYZE DEVELOPER
     ===================================================== */
 
-    async function analyzeDeveloper(
-        username
-    ) {
+    async function analyzeDeveloper(input) {
+
+        const username =
+            extractUsername(input);
 
         if (
-            !isValidUsername(
-                username
-            )
+            !isValidUsername(username)
         ) {
-
             throw new GitHubAPIError(
-                "Invalid GitHub username."
+                "Please enter a valid GitHub profile URL."
             );
-
         }
 
-
-        const cleanUsername =
-            username.trim();
-
-
         const endpoint =
-            `${CONFIG.API_BASE_URL}` +
-            `${CONFIG.ENDPOINTS.ANALYZE}/` +
-            `${encodeURIComponent(
-                cleanUsername
-            )}`;
-
+            CONFIG.API_BASE_URL +
+            CONFIG.ENDPOINTS.ANALYZE +
+            "/" +
+            encodeURIComponent(username);
 
         return await request(
             endpoint,
             {
                 method: "GET",
-
                 cache: "no-store"
             }
         );
-
     }
 
 
@@ -380,22 +291,14 @@
 
     async function checkAPI() {
 
-        try {
-
-            return await request(
-                `${CONFIG.API_BASE_URL}/health`,
-                {
-                    method: "GET",
-                    cache: "no-store"
-                }
-            );
-
-        } catch (error) {
-
-            throw error;
-
-        }
-
+        return await request(
+            CONFIG.API_BASE_URL +
+            CONFIG.ENDPOINTS.HEALTH,
+            {
+                method: "GET",
+                cache: "no-store"
+            }
+        );
     }
 
 
@@ -403,23 +306,16 @@
        NORMALIZE PROFILE
     ===================================================== */
 
-    function normalizeProfile(
-        profile
-    ) {
+    function normalizeProfile(profile) {
 
         if (
             !profile ||
-            typeof profile !==
-            "object"
+            typeof profile !== "object"
         ) {
-
             return null;
-
         }
 
-
         return {
-
             login:
                 profile.login || null,
 
@@ -445,35 +341,26 @@
                 profile.blog || null,
 
             twitter_username:
-                profile.twitter_username ||
-                null,
+                profile.twitter_username || null,
 
             public_repos:
-                profile.public_repos ??
-                null,
+                profile.public_repos ?? null,
 
             public_gists:
-                profile.public_gists ??
-                null,
+                profile.public_gists ?? null,
 
             followers:
-                profile.followers ??
-                null,
+                profile.followers ?? null,
 
             following:
-                profile.following ??
-                null,
+                profile.following ?? null,
 
             created_at:
-                profile.created_at ||
-                null,
+                profile.created_at || null,
 
             updated_at:
-                profile.updated_at ||
-                null
-
+                profile.updated_at || null
         };
-
     }
 
 
@@ -481,20 +368,14 @@
        NORMALIZE REPOSITORY
     ===================================================== */
 
-    function normalizeRepository(
-        repo
-    ) {
+    function normalizeRepository(repo) {
 
         if (
             !repo ||
-            typeof repo !==
-            "object"
+            typeof repo !== "object"
         ) {
-
             return null;
-
         }
-
 
         return {
 
@@ -546,19 +427,13 @@
                 "main",
 
             fork:
-                Boolean(
-                    repo.fork
-                ),
+                Boolean(repo.fork),
 
             archived:
-                Boolean(
-                    repo.archived
-                ),
+                Boolean(repo.archived),
 
             disabled:
-                Boolean(
-                    repo.disabled
-                ),
+                Boolean(repo.disabled),
 
             visibility:
                 repo.visibility ||
@@ -577,18 +452,14 @@
                 null,
 
             topics:
-                Array.isArray(
-                    repo.topics
-                )
+                Array.isArray(repo.topics)
                     ? repo.topics
                     : [],
 
             license:
                 repo.license ||
                 null
-
         };
-
     }
 
 
@@ -596,22 +467,16 @@
        NORMALIZE RESPONSE
     ===================================================== */
 
-    function normalizeAnalysis(
-        data
-    ) {
+    function normalizeAnalysis(data) {
 
         if (
             !data ||
-            typeof data !==
-            "object"
+            typeof data !== "object"
         ) {
-
             throw new GitHubAPIError(
                 "Invalid analysis response."
             );
-
         }
-
 
         const profile =
             normalizeProfile(
@@ -620,29 +485,28 @@
                 data.developer
             );
 
-
         const repositories =
             Array.isArray(
                 data.repositories
             )
                 ? data.repositories
-                    .map(
-                        normalizeRepository
-                    )
+                    .map(normalizeRepository)
                     .filter(Boolean)
                 : [];
 
-
         return {
-
             ...data,
+
+            success:
+                data.success !== false,
 
             profile,
 
-            repositories
+            repositories,
 
+            repositoryCount:
+                repositories.length
         };
-
     }
 
 
@@ -650,20 +514,12 @@
        PUBLIC ANALYZE METHOD
     ===================================================== */
 
-    async function getDeveloperAnalysis(
-        username
-    ) {
+    async function getDeveloperAnalysis(input) {
 
         const data =
-            await analyzeDeveloper(
-                username
-            );
+            await analyzeDeveloper(input);
 
-
-        return normalizeAnalysis(
-            data
-        );
-
+        return normalizeAnalysis(data);
     }
 
 
@@ -671,28 +527,25 @@
        GITHUB PROFILE URL
     ===================================================== */
 
-    function createProfileURL(
-        username
-    ) {
+    function createProfileURL(username) {
+
+        const cleanUsername =
+            extractUsername(username);
 
         if (
             !isValidUsername(
-                username
+                cleanUsername
             )
         ) {
-
             return null;
-
         }
-
 
         return (
             "https://github.com/" +
             encodeURIComponent(
-                username
+                cleanUsername
             )
         );
-
     }
 
 
@@ -714,9 +567,10 @@
         validateUsername:
             isValidUsername,
 
+        extractUsername:
+            extractUsername,
+
         GitHubAPIError
-
     };
-
 
 })();
